@@ -326,8 +326,7 @@ class InceptionI3d(nn.Module):
 
         x = self.logits(self.dropout(self.avg_pool(x)))
         if self._spatial_squeeze:
-            logits = x.squeeze(3).squeeze(3)
-        # logits is batch X time X classes, which is what we want to work with
+            logits = x.squeeze(3).squeeze(3).squeeze(2)  # [batch, classes] -> マルチラベルの損失関数に対応
         return logits
         
 
@@ -336,3 +335,29 @@ class InceptionI3d(nn.Module):
             if end_point in self.end_points:
                 x = self._modules[end_point](x)
         return self.avg_pool(x)
+
+
+    def no_weight_decay(self):
+        """重み減衰から除外するパラメータの名前を返します。
+        バイアス、バッチ正規化のガンマとベータパラメータを除外します。
+        
+        Returns:
+            重み減衰を適用すべきでないパラメータ名のセット
+        """
+        skip = set()
+        
+        # モデル内のすべてのパラメータを調査
+        for name, param in self.named_parameters():
+            # バイアスを除外
+            if 'bias' in name:
+                skip.add(name)
+            # バッチ正規化レイヤーのウェイトとバイアスを除外
+            elif 'bn' in name:
+                skip.add(name)
+        
+        return skip
+    
+    @property
+    def num_classes(self):
+        """クラス数を取得するプロパティ"""
+        return self._num_classes
