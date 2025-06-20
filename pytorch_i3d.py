@@ -187,7 +187,11 @@ class InceptionI3d(nn.Module):
     )
 
     def __init__(self, num_classes=400, spatial_squeeze=True,
-                 final_endpoint='Logits', name='inception_i3d', in_channels=3, dropout_keep_prob=0.5):
+                 final_endpoint='Logits', name='inception_i3d', in_channels=3, dropout_keep_prob=0.5, 
+                 all_frames=16, 
+                 img_size=224, 
+                 tubelet_size=2,
+                 use_checkpoint=False):
         """Initializes I3D model instance.
         Args:
           num_classes: The number of outputs in the logit layer (default 400, which
@@ -361,3 +365,24 @@ class InceptionI3d(nn.Module):
     def num_classes(self):
         """クラス数を取得するプロパティ"""
         return self._num_classes
+
+    
+    from timm.models.registry import register_model
+    @register_model
+    def inception_i3d(num_classes=400, **kwargs):
+        """Inception-v1 I3D architecture.
+        Args:
+          num_classes: The number of outputs in the logit layer (default 400, which
+              matches the Kinetics dataset).
+          spatial_squeeze: Whether to squeeze the spatial dimensions for the logits
+              before returning (default True).
+          final_endpoint: The model contains many possible endpoints.
+              `final_endpoint` specifies the last endpoint for the model to be built
+              up to. In addition to the output at `final_endpoint`, all the outputs
+              at endpoints up to `final_endpoint` will also be returned, in a
+              dictionary. `final_endpoint` must be one of
+              InceptionI3d.VALID_ENDPOINTS (default 'Logits').
+          name: A string (optional). The name of this module.
+        """
+        model = InceptionI3d(num_classes=num_classes, **kwargs)
+        return model
